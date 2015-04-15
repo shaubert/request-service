@@ -27,5 +27,5 @@ Android API >= 11
 
         <service android:name="com.shaubert.network.service.RequestService" android:exported="false"/>
 
-3.  Extend from Request and Response.
-4.  `Call Request.startOnService()`
+3.  Extend from `Request` and `Response`. In `produceEvent` method you can return `DefaultEvent` if you are not working with eventbus.
+4.  Call `Request.startOnService()`.
