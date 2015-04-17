@@ -18,7 +18,7 @@ import static com.shaubert.network.service.RSEvent.Status.CANCELLED;
 import static com.shaubert.network.service.RSEvent.Status.RUNNING;
 import static com.shaubert.network.service.RSEvent.Status.SUCCESS;
 
-public class RequestService extends Service {
+public class RequestService extends Service implements RSCache.Callback {
 
     public static boolean LOGGING = true;
 
@@ -90,7 +90,8 @@ public class RequestService extends Service {
 
             Request request = intent.getParcelableExtra(PARCELABLE_REQUEST_EXTRA);
             if (request != null) {
-                execute(request);
+                serviceConfig.getInjector().inject(this, request);
+                executeIfNeeded(request);
             }
         }
         stopSelfIfNeeded();
@@ -102,46 +103,57 @@ public class RequestService extends Service {
         requestPreferences.setCancelled(requestId);
         Request request = requests.get(requestId);
         if (request != null) {
-            request.onCancelled();
-
-            RSEvent event = request.produceEvent(CANCELLED, null);
-            event.setRequest(request);
-            putInCacheAndBus(event);
+            handleCancelledRequest(request);
         }
     }
 
     @SuppressWarnings("unchecked")
-    protected void execute(Request request) {
+    protected void executeIfNeeded(Request request) {
         if (!handleCancelledRequest(request)
-                && !returnResultFromCache(request)) {
-            putRequestInQueueIfNeeded(request);
-            if (isInFrontOfQueue(request)) {
-                if (LOGGING) debug(">>>: " + request);
-                long requestStartTime = SystemClock.uptimeMillis();
-                requestTimes.put(request, requestStartTime);
-                requests.put(request.getId(), request);
-                serviceConfig.getInjector().inject(this, request);
-                serviceConfig.getExecutor().execute(request, createCallback(request));
-            }
+                && !shouldWaitResultFromCache(request)) {
+            execute(request);
         } else {
             stopSelfIfNeeded();
         }
     }
 
-    private boolean returnResultFromCache(Request request) {
+    @SuppressWarnings("unchecked")
+    private void execute(Request request) {
+        putRequestInQueueIfNeeded(request);
+        if (isInFrontOfQueue(request)) {
+            if (LOGGING) debug(">>>: " + request);
+            long requestStartTime = SystemClock.uptimeMillis();
+            requestTimes.put(request, requestStartTime);
+            requests.put(request.getId(), request);
+            serviceConfig.getExecutor().execute(request, createCallback(request));
+        }
+    }
+
+    private boolean shouldWaitResultFromCache(Request request) {
         if (request.isForced()) return false;
 
-        Response response = serviceConfig.getCache().get(request);
-        if (response != null) {
+        requests.put(request.getId(), request);
+        serviceConfig.getCache().get(request, this);
+        return true;
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public void onResultFromCache(Request request, Response response) {
+        if (handleCancelledRequest(request)) {
+            return;
+        }
+
+        if (response != null &&
+                (!request.shouldExecute(response)) || !serviceConfig.getTimeTable().shouldExecute(request)) {
             RSEvent event = request.produceEvent(SUCCESS, response);
-            //noinspection unchecked
             event.setRequest(request);
             event.setFromCache(true);
             putInCacheAndBus(event);
-            return true;
+            cleanUpForRequest(request);
+        } else {
+            execute(request);
         }
-
-        return false;
     }
 
     private static void info(String text) {
@@ -187,7 +199,7 @@ public class RequestService extends Service {
             queue.remove(request);
             Request nextRequest = queue.peek();
             if (nextRequest != null) {
-                execute(nextRequest);
+                executeIfNeeded(nextRequest);
             }
         }
         stopSelfIfNeeded();
@@ -216,14 +228,19 @@ public class RequestService extends Service {
     @SuppressWarnings("unchecked")
     protected boolean handleCancelledRequest(Request request) {
         if (requestPreferences.isCancelled(request.getId())) {
-            info("skipping cancelled request: " + request);
+            serviceConfig.getExecutor().cancel(request);
+            request.onCancelled();
+
+            if (LOGGING) info("skipping cancelled request: " + request);
 
             RSEvent event = request.produceEvent(CANCELLED, null);
             event.setRequest(request);
             putInCacheAndBus(event);
+
+            cleanUpForRequest(request);
             return true;
         } else {
-            return false;
+            return !requests.containsKey(request.getId());
         }
     }
 

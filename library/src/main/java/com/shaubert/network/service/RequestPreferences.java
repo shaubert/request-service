@@ -1,5 +1,6 @@
 package com.shaubert.network.service;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.SharedPreferences;
 
@@ -11,6 +12,7 @@ class RequestPreferences {
         preferences = context.getSharedPreferences("__request-service-state-prefs", Context.MODE_PRIVATE);
     }
 
+    @SuppressLint("CommitPrefEdits")
     public void setCancelled(String requestId) {
         preferences.edit().putBoolean(getKey(requestId), true).commit();
     }
@@ -23,6 +25,7 @@ class RequestPreferences {
         return preferences.getBoolean(getKey(requestId), false);
     }
 
+    @SuppressLint("CommitPrefEdits")
     public void remove(String requestId) {
         preferences.edit().remove(getKey(requestId)).commit();
     }

@@ -1,11 +1,10 @@
 package com.shaubert.network.service;
 
-import android.content.Context;
 import com.shaubert.network.service.impl.*;
 
 /**
  * Configuration for {@link com.shaubert.network.service.RequestService RequestService}. You have to setup config with
- * {@link com.shaubert.network.service.ServiceConfig#newBuilder(android.content.Context) newBuilder()} before executing any request.
+ * {@link com.shaubert.network.service.ServiceConfig#newBuilder() newBuilder()} before executing any request.
  * Best place for it in {@link android.app.Application#onCreate() Application.onCreate()}.
  */
 public class ServiceConfig {
@@ -14,12 +13,13 @@ public class ServiceConfig {
     private RSInjector injector;
     private RSExecutor executor;
     private RSTracker tracker;
+    private RSTimeTable timeTable;
 
     private static ServiceConfig instance;
 
     /**
      * @return true if configuration was successfully built and set via
-     * {@link com.shaubert.network.service.ServiceConfig#newBuilder(android.content.Context) newBuilder()} method.
+     * {@link com.shaubert.network.service.ServiceConfig#newBuilder() newBuilder()} method.
      */
     public static boolean isSet() {
         return instance != null;
@@ -42,8 +42,8 @@ public class ServiceConfig {
         instance = config;
     }
 
-    public static Builder newBuilder(Context context) {
-        return new Builder(context);
+    public static Builder newBuilder() {
+        return new Builder();
     }
 
     private ServiceConfig(Builder builder) {
@@ -52,6 +52,7 @@ public class ServiceConfig {
         injector = builder.injector;
         executor = builder.executor;
         tracker = builder.tracker;
+        timeTable = builder.timeTable;
     }
 
     public RSBus getBus() {
@@ -74,6 +75,9 @@ public class ServiceConfig {
         return executor;
     }
 
+    public RSTimeTable getTimeTable() {
+        return timeTable;
+    }
 
     public static final class Builder {
         private RSBus bus;
@@ -81,11 +85,9 @@ public class ServiceConfig {
         private RSInjector injector;
         private RSExecutor executor;
         private RSTracker tracker;
+        private RSTimeTable timeTable;
 
-        private Context context;
-
-        private Builder(Context context) {
-            this.context = context;
+        private Builder() {
         }
 
         public Builder bus(RSBus bus) {
@@ -113,12 +115,18 @@ public class ServiceConfig {
             return this;
         }
 
+        public Builder timeTable(RSTimeTable timeTable) {
+            this.timeTable = timeTable;
+            return this;
+        }
+
         public ServiceConfig buildAndSet() {
             if (bus == null) bus = new VoidBus();
             if (cache == null) cache = new VoidCache();
             if (injector == null) injector = new VoidInjector();
-            if (executor == null) executor = new DefaultMainThreadExecutor(context);
+            if (executor == null) executor = new DefaultMainThreadExecutor();
             if (tracker == null) tracker = new VoidTracker();
+            if (timeTable == null) timeTable = new VoidTimeTable();
 
             ServiceConfig serviceConfig = new ServiceConfig(this);
             set(serviceConfig);

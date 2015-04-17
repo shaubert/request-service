@@ -116,6 +116,19 @@ public abstract class Request<T extends Response<T>, F> implements Parcelable {
     public abstract void execute(ResultCallback<T, F> callback);
 
     /**
+     * Could be called before {@link com.shaubert.network.service.Request#execute(ResultCallback) execute()} if cache
+     * contains response from previous execution and request not {@link Request#isForced() isForced()}.
+     * @param previousResponse not null response from last execution
+     * @return true to execute request, false otherwise. If you return false then
+     * {@link com.shaubert.network.service.Request#produceEvent(com.shaubert.network.service.RSEvent.Status, Object) produceEvent()}
+     * will be called with {@link com.shaubert.network.service.RSEvent.Status#SUCCESS SUCCESS}
+     * status and previousResponse. Created event will be posted in bus and put in cache.
+     */
+    public boolean shouldExecute(T previousResponse) {
+        return true;
+    }
+
+    /**
      * Called when request is cancelled
      */
     public abstract void onCancelled();

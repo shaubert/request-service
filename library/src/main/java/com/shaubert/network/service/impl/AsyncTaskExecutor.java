@@ -14,48 +14,46 @@ public class AsyncTaskExecutor implements RSExecutor {
     private Map<String, AsyncTask> asyncTaskMap = new HashMap<>();
 
     @Override
-    public void execute(final Request request, final ResultCallback resultCallback) {
-        AsyncTask task = new AsyncTask() {
-            Object _error;
-            Response _response;
+    public <T extends Response<T>, F> void execute(final Request<T, F> request, final ResultCallback<T, F> resultCallback) {
+        AsyncTask<Void, Void, Void> task = new AsyncTask<Void, Void, Void>() {
+            F _error;
+            boolean errorCalled;
+            T _response;
+            boolean successCalled;
 
             @Override
-            protected Object doInBackground(Object[] params) {
-                //noinspection unchecked
-                request.execute(new ResultCallback() {
+            protected Void doInBackground(Void[] params) {
+                request.execute(new ResultCallback<T, F>() {
                     @Override
-                    public void handleError(Object error) {
+                    public void handleError(F error) {
                         _error = error;
+                        errorCalled = true;
                     }
 
                     @Override
-                    public void handleSuccess(Response response) {
+                    public void handleSuccess(T response) {
                         _response = response;
+                        successCalled = true;
                     }
                 });
-
-                if (_response == null && _error == null) {
-                    throw new IllegalStateException("AsyncTaskExecutor is only for synchronous requests. execute() call for request "
-                            + request.getClass() + " didn't return any value with callback.");
-                }
-
                 return null;
             }
 
             @Override
-            protected void onPostExecute(Object o) {
+            protected void onPostExecute(Void o) {
                 onTaskFinished(request.getId());
-                if (_response != null) {
-                    //noinspection unchecked
+                if (successCalled) {
                     resultCallback.handleSuccess(_response);
-                } else {
-                    //noinspection unchecked
+                } else if (errorCalled) {
                     resultCallback.handleError(_error);
+                } else {
+                    throw new IllegalStateException("AsyncTaskExecutor is only for synchronous requests. execute() call for request "
+                            + request.getClass() + " didn't return any value with callback.");
                 }
             }
 
             @Override
-            protected void onCancelled(Object o) {
+            protected void onCancelled(Void o) {
                 onTaskFinished(request.getId());
             }
 
@@ -76,11 +74,10 @@ public class AsyncTaskExecutor implements RSExecutor {
     }
 
     @Override
-    public void cancel(Request request) {
+    public <T extends Response<T>, F> void cancel(Request<T, F> request) {
         AsyncTask task = asyncTaskMap.get(request.getId());
         if (task != null) {
             task.cancel(true);
-            request.onCancelled();
         }
     }
 
