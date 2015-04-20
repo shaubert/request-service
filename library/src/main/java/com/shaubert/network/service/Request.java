@@ -4,7 +4,6 @@ import android.content.Context;
 import android.os.Parcel;
 import android.os.Parcelable;
 
-import java.lang.reflect.ParameterizedType;
 import java.util.UUID;
 
 /**
@@ -34,7 +33,8 @@ public abstract class Request<T extends Response<T>, F> implements Parcelable {
      * Create or restore request
      * @param in parcel object to restore state or null to create new
      */
-    protected Request(Parcel in) {
+    protected Request(Parcel in, Class<T> responseClass) {
+        this.responseClass = responseClass;
         if (in != null) {
             this.id = in.readString();
             this.forced = in.readByte() != 0;
@@ -43,11 +43,7 @@ public abstract class Request<T extends Response<T>, F> implements Parcelable {
         }
     }
 
-    @SuppressWarnings("unchecked")
     public Class<T> getResponseClass() {
-        if (responseClass == null) {
-            responseClass = (Class<T>) ((ParameterizedType) getClass().getGenericSuperclass()).getActualTypeArguments()[0];
-        }
         return responseClass;
     }
 
