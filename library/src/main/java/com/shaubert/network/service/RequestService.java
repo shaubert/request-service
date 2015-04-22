@@ -226,6 +226,11 @@ public class RequestService extends Service implements RSCache.Callback {
     }
 
     @SuppressWarnings("unchecked")
+    protected boolean handleCancelledExecutingRequest(Request request) {
+        return handleCancelledRequest(request) || !requests.containsKey(request.getId());
+    }
+
+    @SuppressWarnings("unchecked")
     protected boolean handleCancelledRequest(Request request) {
         if (requestPreferences.isCancelled(request.getId())) {
             serviceConfig.getExecutor().cancel(request);
@@ -240,7 +245,7 @@ public class RequestService extends Service implements RSCache.Callback {
             cleanUpForRequest(request);
             return true;
         } else {
-            return !requests.containsKey(request.getId());
+            return false;
         }
     }
 
@@ -297,7 +302,7 @@ public class RequestService extends Service implements RSCache.Callback {
         @SuppressWarnings("unchecked")
         @Override
         public void handleError(Object failure) {
-            if (!handleCancelledRequest(request)) {
+            if (!handleCancelledExecutingRequest(request)) {
                 warn("request " + request.getName() + " failed: " + failure);
 
                 RSEvent event = request.produceEvent(RSEvent.Status.FAILURE, failure);
@@ -312,7 +317,7 @@ public class RequestService extends Service implements RSCache.Callback {
         @SuppressWarnings("unchecked")
         @Override
         public void handleSuccess(Response response) {
-            if (!handleCancelledRequest(request)) {
+            if (!handleCancelledExecutingRequest(request)) {
                 logRequestExecutionTime(request);
 
                 response.onParsed();
