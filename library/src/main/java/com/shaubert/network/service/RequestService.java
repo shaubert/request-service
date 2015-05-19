@@ -320,7 +320,7 @@ public class RequestService extends Service implements RSCache.Callback {
             if (!handleCancelledExecutingRequest(request)) {
                 logRequestExecutionTime(request);
 
-                response.onParsed();
+                if (response != null) response.onParsed();
                 RSEvent event = request.produceEvent(RSEvent.Status.SUCCESS, response);
                 event.getSuccess().setQualifier(request.getQualifier());
                 event.setRequest(request);
