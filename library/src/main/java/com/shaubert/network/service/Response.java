@@ -25,17 +25,6 @@ public abstract class Response<R extends Response<R>> {
     public void onParsed() {
     }
 
-    /**
-     * Merges existing response with another one of the same type.
-     * Default implementation does not merge anything and just returns newly arrived response
-     *
-     * @param newData response data for merging into {@code this}
-     * @return merged data from two responses
-     */
-    public R merge(R newData) {
-        return newData;
-    }
-
     private String qualifier;
 
     public String getQualifier() {
