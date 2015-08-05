@@ -96,6 +96,12 @@ public abstract class Request<T extends Response<T>, F> implements Parcelable {
         return forced;
     }
 
+    public final RSEvent<T, F> produceAndSetupEvent(RSEvent.Status status, Object responseOrFailure) {
+        RSEvent<T, F> event = produceEvent(status, responseOrFailure);
+        event.setRequest(this);
+        return event;
+    }
+
     /**
      * @param status event status
      * @param responseOrFailure event value

@@ -62,7 +62,7 @@ public abstract class RSEvent<OK extends Response<OK>, FAIL> {
         return creationTime;
     }
 
-    void setFromCache(boolean fromCache) {
+    public void setFromCache(boolean fromCache) {
         this.fromCache = fromCache;
     }
 

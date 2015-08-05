@@ -47,8 +47,7 @@ public class RequestService extends Service implements RSCache.Callback {
         intent.putExtra(PARCELABLE_REQUEST_EXTRA, (Parcelable) request);
         context.startService(intent);
 
-        RSEvent event = request.produceEvent(RUNNING, null);
-        event.setRequest(request);
+        RSEvent event = request.produceAndSetupEvent(RUNNING, null);
         putInCacheAndBus(config, event);
     }
 
@@ -146,8 +145,7 @@ public class RequestService extends Service implements RSCache.Callback {
 
         if (response != null &&
                 (!request.shouldExecute(response)) || !serviceConfig.getTimeTable().shouldExecute(request)) {
-            RSEvent event = request.produceEvent(SUCCESS, response);
-            event.setRequest(request);
+            RSEvent event = request.produceAndSetupEvent(SUCCESS, response);
             event.setFromCache(true);
             putInCacheAndBus(event);
             cleanUpForRequest(request);
@@ -238,8 +236,7 @@ public class RequestService extends Service implements RSCache.Callback {
 
             if (LOGGING) info("skipping cancelled request: " + request);
 
-            RSEvent event = request.produceEvent(CANCELLED, null);
-            event.setRequest(request);
+            RSEvent event = request.produceAndSetupEvent(CANCELLED, null);
             putInCacheAndBus(event);
 
             cleanUpForRequest(request);
@@ -305,8 +302,7 @@ public class RequestService extends Service implements RSCache.Callback {
             if (!handleCancelledExecutingRequest(request)) {
                 warn("request " + request.getName() + " failed: " + failure);
 
-                RSEvent event = request.produceEvent(RSEvent.Status.FAILURE, failure);
-                event.setRequest(request);
+                RSEvent event = request.produceAndSetupEvent(RSEvent.Status.FAILURE, failure);
 
                 logFailure(event);
                 putInCacheAndBus(event);
@@ -324,8 +320,7 @@ public class RequestService extends Service implements RSCache.Callback {
                     response.setQualifier(request.getQualifier());
                     response.onParsed();
                 }
-                RSEvent event = request.produceEvent(RSEvent.Status.SUCCESS, response);
-                event.setRequest(request);
+                RSEvent event = request.produceAndSetupEvent(RSEvent.Status.SUCCESS, response);
 
                 if (LOGGING) debug("<<<: " + event.getSuccess());
 
