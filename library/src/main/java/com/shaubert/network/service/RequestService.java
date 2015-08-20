@@ -124,6 +124,7 @@ public class RequestService extends Service implements RSCache.Callback {
             long requestStartTime = SystemClock.uptimeMillis();
             requestTimes.put(request, requestStartTime);
             requests.put(request.getId(), request);
+            serviceConfig.getTimeTable().updateExecutionTime(request);
             serviceConfig.getExecutor().execute(request, createCallback(request));
         }
     }
