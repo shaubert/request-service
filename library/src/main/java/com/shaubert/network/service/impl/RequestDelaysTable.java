@@ -10,12 +10,20 @@ public class RequestDelaysTable {
     private List<RequestGroup> requestGroups = new ArrayList<>();
     private long maxDelay;
 
-    protected RequestDelaysTable() {
+    public RequestDelaysTable() {
         this(DEFAULT_DELAY);
     }
 
-    protected RequestDelaysTable(long defaultDelay) {
+    public RequestDelaysTable(long defaultDelay) {
         this.defaultDelay = defaultDelay;
+    }
+
+    public void setDefaultDelay(long defaultDelay) {
+        this.defaultDelay = defaultDelay;
+    }
+
+    public static long getDefaultDelay() {
+        return DEFAULT_DELAY;
     }
 
     public void addGroup(RequestGroup group) {
@@ -54,7 +62,7 @@ public class RequestDelaysTable {
         private Set<Class<?>> requestClasses = new HashSet<>();
         private final long refreshDelay;
 
-        private RequestGroup(long refreshDelay) {
+        public RequestGroup(long refreshDelay) {
             this.refreshDelay = refreshDelay;
         }
 

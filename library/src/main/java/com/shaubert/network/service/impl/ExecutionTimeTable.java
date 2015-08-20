@@ -29,8 +29,12 @@ public class ExecutionTimeTable implements RSTimeTable {
         loadExecutionTimes();
     }
 
+    public void setRequestDelaysTable(RequestDelaysTable requestDelaysTable) {
+        this.requestDelaysTable = requestDelaysTable;
+    }
+
     @SuppressWarnings("unchecked")
-    public void loadExecutionTimes() {
+    protected void loadExecutionTimes() {
         executionTimes.clear();
         executionTimes.putAll((Map<String, Long>) prefs.getAll());
     }
@@ -75,28 +79,28 @@ public class ExecutionTimeTable implements RSTimeTable {
         prefs.edit().clear().commit();
     }
 
-    private void put(Entry entry, long clockValue) {
+    protected void put(Entry entry, long clockValue) {
         String key = entry.getKey();
         cachedEntries.put(key, entry);
         executionTimes.put(key, clockValue);
         prefs.edit().putLong(key, clockValue).apply();
     }
 
-    private void remove(String key) {
+    protected void remove(String key) {
         cachedEntries.remove(key);
         executionTimes.remove(key);
         prefs.edit().remove(key).apply();
     }
 
-    private Long get(Entry entry) {
+    protected Long get(Entry entry) {
         return executionTimes.get(entry.getKey());
     }
 
-    private long getClockValue() {
+    protected long getClockValue() {
         return System.currentTimeMillis();
     }
 
-    private boolean isRequestExceededDelay(Request<?, ?> request) {
+    protected boolean isRequestExceededDelay(Request<?, ?> request) {
         Long lastExecutionTime = get(new Entry(request));
         if (lastExecutionTime != null) {
             long diff = getClockValue() - lastExecutionTime;
