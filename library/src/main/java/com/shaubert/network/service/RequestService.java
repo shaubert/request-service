@@ -14,9 +14,7 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.Queue;
 
-import static com.shaubert.network.service.RSEvent.Status.CANCELLED;
-import static com.shaubert.network.service.RSEvent.Status.RUNNING;
-import static com.shaubert.network.service.RSEvent.Status.SUCCESS;
+import static com.shaubert.network.service.RSEvent.Status.*;
 
 public class RequestService extends Service implements RSCache.Callback {
 
@@ -47,7 +45,7 @@ public class RequestService extends Service implements RSCache.Callback {
         intent.putExtra(PARCELABLE_REQUEST_EXTRA, (Parcelable) request);
         context.startService(intent);
 
-        RSEvent event = request.produceAndSetupEvent(RUNNING, null);
+        RSEvent event = request.produceAndSetupEvent(QUEUED, null);
         putInCacheAndBus(config, event);
     }
 
@@ -108,11 +106,11 @@ public class RequestService extends Service implements RSCache.Callback {
 
     @SuppressWarnings("unchecked")
     protected void executeIfNeeded(Request request) {
-        if (!handleCancelledRequest(request)
-                && !shouldWaitResultFromCache(request)) {
-            execute(request);
-        } else {
+        if (handleCancelledRequest(request)
+                || shouldWaitResultFromCache(request)) {
             stopSelfIfNeeded();
+        } else {
+            execute(request);
         }
     }
 
@@ -121,9 +119,14 @@ public class RequestService extends Service implements RSCache.Callback {
         putRequestInQueueIfNeeded(request);
         if (isInFrontOfQueue(request)) {
             if (LOGGING) debug(">>>: " + request);
+
             long requestStartTime = SystemClock.uptimeMillis();
             requestTimes.put(request, requestStartTime);
             requests.put(request.getId(), request);
+
+            RSEvent event = request.produceAndSetupEvent(RUNNING, null);
+            putInCacheAndBus(event);
+
             serviceConfig.getTimeTable().updateExecutionTime(request);
             serviceConfig.getExecutor().execute(request, createCallback(request));
         }
@@ -144,14 +147,15 @@ public class RequestService extends Service implements RSCache.Callback {
             return;
         }
 
-        if (response != null &&
-                (!request.shouldExecute(response)) || !serviceConfig.getTimeTable().shouldExecute(request)) {
+        if (response == null
+                || request.shouldExecute(response)
+                || serviceConfig.getTimeTable().shouldExecute(request)) {
+            execute(request);
+        } else {
             RSEvent event = request.produceAndSetupEvent(SUCCESS, response);
             event.setFromCache(true);
             putInCacheAndBus(event);
             cleanUpForRequest(request);
-        } else {
-            execute(request);
         }
     }
 

@@ -8,7 +8,7 @@ Android service for executing requests. Provides core classes for parcelable Req
         maven{url "https://github.com/shaubert/maven-repo/raw/master/releases"}
     }
     dependencies {
-        compile 'com.shaubert.network.service:library:1.0.8'
+        compile 'com.shaubert.network.service:library:1.1'
     }
 
 ## Requirements

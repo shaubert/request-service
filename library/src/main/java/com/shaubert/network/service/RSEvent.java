@@ -3,7 +3,7 @@ package com.shaubert.network.service;
 public abstract class RSEvent<OK extends Response<OK>, FAIL> {
 
     public enum Status {
-        RUNNING, SUCCESS, FAILURE, CANCELLED
+        QUEUED, RUNNING, SUCCESS, FAILURE, CANCELLED
     }
 
     private final Status status;
@@ -26,8 +26,16 @@ public abstract class RSEvent<OK extends Response<OK>, FAIL> {
         return status;
     }
 
+    public boolean isQueued() {
+        return status == Status.QUEUED;
+    }
+
     public boolean isRunning() {
         return status == Status.RUNNING;
+    }
+
+    public boolean isRunningOrQueued() {
+        return isRunning() || isQueued();
     }
 
     public boolean isSuccess() {
