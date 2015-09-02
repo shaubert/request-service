@@ -9,10 +9,7 @@ import android.os.SystemClock;
 import android.text.TextUtils;
 import android.util.Log;
 
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.Map;
-import java.util.Queue;
+import java.util.*;
 
 import static com.shaubert.network.service.RSEvent.Status.*;
 
@@ -75,7 +72,8 @@ public class RequestService extends Service implements RSCache.Callback {
     public int onStartCommand(Intent intent, int flags, int startId) {
         if (intent != null) {
             if (intent.getBooleanExtra(CANCEL_ALL__EXTRA, false)) {
-                for (Request request : requests.values()) {
+                List<Request> requestList = new ArrayList<>(requests.values());
+                for (Request request : requestList) {
                     cancelRequest(request.getId());
                 }
             }
