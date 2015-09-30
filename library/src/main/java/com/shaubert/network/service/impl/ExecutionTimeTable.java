@@ -73,7 +73,7 @@ public class ExecutionTimeTable implements RSTimeTable {
                 }
             }
 
-            if (clearFunction.shouldClear(entry.getRequestClass(), entry.getResponseClass(), entry.getQualifier())) {
+            if (clearFunction.shouldClear(entry)) {
                 remove(key);
             }
         }
