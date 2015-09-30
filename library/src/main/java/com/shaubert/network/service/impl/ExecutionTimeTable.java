@@ -110,13 +110,20 @@ public class ExecutionTimeTable implements RSTimeTable {
     protected boolean isRequestExceededDelay(Request<?, ?> request) {
         Long lastExecutionTime = get(entryBuilder.create(request));
         if (lastExecutionTime != null) {
-            long diff = getClockValue() - lastExecutionTime;
-            if (diff >= 0 //clocks moved back
-                    && diff < requestDelaysTable.getDelay(request)) {
-                return false;
-            }
+            return isTimeExceededDelay(lastExecutionTime, getDelay(request));
+        } else {
+            return true;
         }
-        return true;
+    }
+
+    protected long getDelay(Request<?, ?> request) {
+        return requestDelaysTable.getDelay(request);
+    }
+
+    protected boolean isTimeExceededDelay(long time, long delay) {
+        long diff = getClockValue() - time;
+        return diff < 0 //clocks moved back
+                || diff > delay;
     }
 
 }
