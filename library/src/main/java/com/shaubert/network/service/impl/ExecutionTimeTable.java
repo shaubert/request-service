@@ -3,8 +3,9 @@ package com.shaubert.network.service.impl;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.text.TextUtils;
 import com.shaubert.network.service.RSTimeTable;
+import com.shaubert.network.service.RSTimeTableEntry;
+import com.shaubert.network.service.RSTimeTableEntryBuilder;
 import com.shaubert.network.service.Request;
 
 import java.util.ArrayList;
@@ -18,13 +19,19 @@ public class ExecutionTimeTable implements RSTimeTable {
 
     private static final String REQUESTS_EXECUTION_TIMES = "__sh_requests-exec-times-prefs";
 
-    private Map<String, Entry> cachedEntries = new HashMap<>();
+    private Map<String, RSTimeTableEntry> cachedEntries = new HashMap<>();
     private Map<String, Long> executionTimes = new HashMap<>();
     private RequestDelaysTable requestDelaysTable = new RequestDelaysTable();
 
     private final SharedPreferences prefs;
+    private RSTimeTableEntryBuilder entryBuilder;
 
     public ExecutionTimeTable(Context context) {
+        this(context, new DefaultTimeTableEntryBuilder());
+    }
+
+    public ExecutionTimeTable(Context context, RSTimeTableEntryBuilder entryBuilder) {
+        this.entryBuilder = entryBuilder;
         this.prefs = context.getSharedPreferences(REQUESTS_EXECUTION_TIMES, Context.MODE_PRIVATE);
         loadExecutionTimes();
     }
@@ -46,7 +53,7 @@ public class ExecutionTimeTable implements RSTimeTable {
 
     @Override
     public void updateExecutionTime(Request<?, ?> request) {
-        put(new Entry(request), getClockValue());
+        put(new ExecutionTimeTableRequestEntry(request), getClockValue());
     }
 
     @Override
@@ -55,9 +62,9 @@ public class ExecutionTimeTable implements RSTimeTable {
 
         List<String> keys = new ArrayList<>(executionTimes.keySet());
         for (String key : keys) {
-            Entry entry = cachedEntries.get(key);
+            RSTimeTableEntry entry = cachedEntries.get(key);
             if (entry == null) {
-                entry = Entry.parse(key);
+                entry = entryBuilder.parse(key);
                 if (entry != null) {
                     cachedEntries.put(key, entry);
                 } else {
@@ -66,7 +73,7 @@ public class ExecutionTimeTable implements RSTimeTable {
                 }
             }
 
-            if (clearFunction.shouldClear(entry.requestClass, entry.responseClass, entry.qualifier)) {
+            if (clearFunction.shouldClear(entry.getRequestClass(), entry.getResponseClass(), entry.getQualifier())) {
                 remove(key);
             }
         }
@@ -79,7 +86,7 @@ public class ExecutionTimeTable implements RSTimeTable {
         prefs.edit().clear().commit();
     }
 
-    protected void put(Entry entry, long clockValue) {
+    protected void put(RSTimeTableEntry entry, long clockValue) {
         String key = entry.getKey();
         cachedEntries.put(key, entry);
         executionTimes.put(key, clockValue);
@@ -92,7 +99,7 @@ public class ExecutionTimeTable implements RSTimeTable {
         prefs.edit().remove(key).apply();
     }
 
-    protected Long get(Entry entry) {
+    protected Long get(RSTimeTableEntry entry) {
         return executionTimes.get(entry.getKey());
     }
 
@@ -101,7 +108,7 @@ public class ExecutionTimeTable implements RSTimeTable {
     }
 
     protected boolean isRequestExceededDelay(Request<?, ?> request) {
-        Long lastExecutionTime = get(new Entry(request));
+        Long lastExecutionTime = get(entryBuilder.create(request));
         if (lastExecutionTime != null) {
             long diff = getClockValue() - lastExecutionTime;
             if (diff >= 0 //clocks moved back
@@ -110,45 +117,6 @@ public class ExecutionTimeTable implements RSTimeTable {
             }
         }
         return true;
-    }
-
-    private static class Entry {
-        private Class<?> requestClass;
-        private Class<?> responseClass;
-        private String qualifier;
-
-        Entry(Request<?, ?> request) {
-            requestClass = request.getClass();
-            responseClass = request.getResponseClass();
-            qualifier = request.getQualifier();
-        }
-
-        Entry(Class<?> requestClass, Class<?> responseClass, String qualifier) {
-            this.requestClass = requestClass;
-            this.responseClass = responseClass;
-            this.qualifier = qualifier;
-        }
-
-        static Entry parse(String key) {
-            String[] values = key.split("\\-\\|\\-");
-            if (values.length == 3) {
-                try {
-                    Class<?> requestClass = Class.forName(values[0]);
-                    Class<?> responseClass = Class.forName(values[2]);
-                    String qualifier = null;
-                    if (!TextUtils.equals(values[1], "null")) {
-                        qualifier = values[1];
-                    }
-                    return new Entry(requestClass, responseClass, qualifier);
-                } catch (ClassNotFoundException ignored) {
-                }
-            }
-            return null;
-        }
-
-        String getKey() {
-            return requestClass.getName() + "-|-" + qualifier + "-|-" + responseClass.getName();
-        }
     }
 
 }
