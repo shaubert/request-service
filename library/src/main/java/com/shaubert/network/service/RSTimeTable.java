@@ -30,14 +30,12 @@ public interface RSTimeTable {
      */
     void clear();
 
-    public interface ClearFunction {
+    interface ClearFunction {
         /**
-         * @param requestClass request class
-         * @param responseClass response class
-         * @param qualifier request qualifier
+         * @param entry table's entry
          * @return true to clear entry, false otherwise
          */
-        boolean shouldClear(Class<?> requestClass, Class<?> responseClass, String qualifier);
+        boolean shouldClear(RSTimeTableEntry entry);
     }
 
 }
