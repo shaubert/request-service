@@ -53,7 +53,7 @@ public class ExecutionTimeTable implements RSTimeTable {
 
     @Override
     public void updateExecutionTime(Request<?, ?> request) {
-        put(new ExecutionTimeTableRequestEntry(request), getClockValue());
+        put(entryBuilder.create(request), getClockValue());
     }
 
     @Override
