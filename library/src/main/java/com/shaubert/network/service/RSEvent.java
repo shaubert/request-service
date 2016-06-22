@@ -1,6 +1,6 @@
 package com.shaubert.network.service;
 
-public abstract class RSEvent<OK extends Response<OK>, FAIL> {
+public abstract class RSEvent<OK extends Response, FAIL> {
 
     public enum Status {
         QUEUED, RUNNING, SUCCESS, FAILURE, CANCELLED

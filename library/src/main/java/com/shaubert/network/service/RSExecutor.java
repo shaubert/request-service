@@ -8,12 +8,12 @@ public interface RSExecutor {
      * @param request request to execute.
      * @param resultCallback callback.
      */
-    <T extends Response<T>, F> void execute(Request<T, F> request, ResultCallback<T, F> resultCallback);
+    <T extends Response, F> void execute(Request<T, F> request, ResultCallback<T, F> resultCallback);
 
     /**
      * Cancel executing request.
      * @param request request to cancel.
      */
-    <T extends Response<T>, F> void cancel(Request<T, F> request);
+    <T extends Response, F> void cancel(Request<T, F> request);
 
 }

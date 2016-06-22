@@ -23,7 +23,7 @@ import java.util.UUID;
  * @param <T> Response class
  * @param <F> Failure class
  */
-public abstract class Request<T extends Response<T>, F> implements Parcelable {
+public abstract class Request<T extends Response, F> implements Parcelable {
 
     private final String id;
     private boolean forced = true;

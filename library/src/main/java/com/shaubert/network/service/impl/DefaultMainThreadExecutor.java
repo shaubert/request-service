@@ -8,12 +8,12 @@ import com.shaubert.network.service.ResultCallback;
 public class DefaultMainThreadExecutor implements RSExecutor {
 
     @Override
-    public <T extends Response<T>, F> void execute(Request<T, F> request, ResultCallback<T, F> resultCallback) {
+    public <T extends Response, F> void execute(Request<T, F> request, ResultCallback<T, F> resultCallback) {
         request.execute(resultCallback);
     }
 
     @Override
-    public <T extends Response<T>, F> void cancel(Request<T, F> request) {
+    public <T extends Response, F> void cancel(Request<T, F> request) {
     }
 
 }

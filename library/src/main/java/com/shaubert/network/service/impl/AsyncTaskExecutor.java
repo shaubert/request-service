@@ -14,7 +14,7 @@ public class AsyncTaskExecutor implements RSExecutor {
     private Map<String, AsyncTask> asyncTaskMap = new HashMap<>();
 
     @Override
-    public <T extends Response<T>, F> void execute(final Request<T, F> request, final ResultCallback<T, F> resultCallback) {
+    public <T extends Response, F> void execute(final Request<T, F> request, final ResultCallback<T, F> resultCallback) {
         AsyncTask<Void, Void, Void> task = new AsyncTask<Void, Void, Void>() {
             F _error;
             boolean errorCalled;
@@ -74,7 +74,7 @@ public class AsyncTaskExecutor implements RSExecutor {
     }
 
     @Override
-    public <T extends Response<T>, F> void cancel(Request<T, F> request) {
+    public <T extends Response, F> void cancel(Request<T, F> request) {
         AsyncTask task = asyncTaskMap.get(request.getId());
         if (task != null) {
             task.cancel(true);

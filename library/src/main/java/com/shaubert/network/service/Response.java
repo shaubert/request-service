@@ -2,7 +2,7 @@ package com.shaubert.network.service;
 
 import android.os.Parcel;
 
-public abstract class Response<R extends Response<R>> {
+public abstract class Response {
 
     private long creationTime;
 
